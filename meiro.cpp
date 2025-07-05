@@ -2,10 +2,14 @@
 #include <vector>
 #include <cstdlib>
 #include <ctime>
+#include <unistd.h>
+
 using namespace std;
 
 const int H = 15; // セルの行数
-const int W = 15; // セルの列数
+const int W = 50; // セルの列数
+
+int playerY = 0, playerX = 0;
 
 // セルごとに上下左右の壁の有無を記録
 struct Cell {
@@ -40,10 +44,10 @@ void dfs(int y, int x) {
     }
 }
 
-void drawMaze(pair<int, int>, int playerY, int playerX) {
+void drawMaze(pair<int, int>) {
     // 最上部の境界線
     for (int x = 0; x < W; x++) {
-        cout << "+---";
+        cout << "+-";
     }
     cout << "+" << endl;
 
@@ -51,11 +55,11 @@ void drawMaze(pair<int, int>, int playerY, int playerX) {
         // 左側の壁 + 各マスの右側
         for (int x = 0; x < W; x++) {
             cout << (grid[y][x].left ? "|" : " ");
-            string cell = "   ";
-            if (visted[y][x]) cell = "∬∬∬";
-         if (y == playerY && x == playerX) cell = " P ";
-            if (y == 0 && x == 0) cell = " S ";
-            if (y == H-1 && x == W-1) cell = " G ";
+            string cell = " ";
+            if (visted[y][x]) cell = "•";
+         if (y == playerY && x == playerX) cell = "P";
+            if (y == 0 && x == 0) cell = "S";
+            if (y == H-1 && x == W-1) cell = "G";
             
             cout << cell;
         }
@@ -64,21 +68,42 @@ void drawMaze(pair<int, int>, int playerY, int playerX) {
         // 下の壁を描画
         for (int x = 0; x < W; x++) {
             cout << "+";
-            cout << (grid[y][x].bottom ? "---" : "   ");
+            cout << (grid[y][x].bottom ? "-" : " ");
         }
         cout << "+" << endl;
     }
 }
 
+void solveMaze(){
+    
+    int dirs[] = {0, 1, 2, 3}; //上右下左
+    for (int i = 3; i > 0; i--) swap(dirs[i], dirs[rand() % (i + 1)]);    
+
+    for (int d : dirs){
+        int ny = playerY + (d == 0 ? -1 : d == 2 ? 1 : 0);
+        int nx = playerX + (d == 1 ? 1 : d == 3 ? -1 : 0);
+
+        if (ny < 0 || ny >= H || nx < 0 || nx >= W) continue;
+        // if (visted[ny][nx]) continue;
+
+        if (d == 0 && !grid[playerY][playerX].top) playerY--; 
+        else if (d == 1 && !grid[playerY][playerX].right) playerX++;
+        else if (d == 2 && !grid[playerY][playerX].bottom) playerY++;
+        else if (d == 3 && !grid[playerY][playerX].left) playerX--;
+
+        break;
+    }
+
+}
+
 int main() {
     srand(time(0));
     dfs(0, 0); // 迷路生成
-    pair<int, int> goal = {H-1, W-1}; // ゴール探す
+    pair<int, int> goal = {H-1, W-1};
 
-    int playerY = 0, playerX = 0;
     while (true) {
-        system("clear"); // Windowsなら "cls"
-        drawMaze(goal, playerY, playerX);
+        system("clear"); 
+        drawMaze(goal);
 
         visted[playerY][playerX] = true;
 
@@ -87,15 +112,17 @@ int main() {
             break;
         }
 
-        cout << "WASDで移動（Enterで決定）> ";
-        char c;
-        cin >> c;
+        usleep(15000);
+        solveMaze();
+        // cout << "WASDで移動（Enterで決定）> ";
+        // char c;
+        // cin >> c;
 
-        // 移動処理（壁チェックつき）
-        if ((c == 'w' || c == 'W') && !grid[playerY][playerX].top) playerY--;
-        else if ((c == 's' || c == 'S') && !grid[playerY][playerX].bottom) playerY++;
-        else if ((c == 'a' || c == 'A') && !grid[playerY][playerX].left) playerX--;
-        else if ((c == 'd' || c == 'D') && !grid[playerY][playerX].right) playerX++;
+        // // 移動処理（壁チェックつき）
+        // if ((c == 'w' || c == 'W') && !grid[playerY][playerX].top) playerY--;
+        // else if ((c == 's' || c == 'S') && !grid[playerY][playerX].bottom) playerY++;
+        // else if ((c == 'a' || c == 'A') && !grid[playerY][playerX].left) playerX--;
+        // else if ((c == 'd' || c == 'D') && !grid[playerY][playerX].right) playerX++;
     }
 
     return 0;
